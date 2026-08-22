@@ -5,17 +5,21 @@ import { createContext, useState, useEffect } from 'react'
 export const ThemeContext = createContext()
 
 export default function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState(() => {
-    if (typeof window === 'undefined') return 'light'
-    try {
-      const stored = localStorage.getItem('theme')
-      return stored || 'light'
-    } catch (e) {
-      return 'light'
-    }
-  })
+  const [theme, setTheme] = useState('light')
+  const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
+    setMounted(true)
+    try {
+      const stored = localStorage.getItem('theme')
+      if (stored) {
+        setTheme(stored)
+      }
+    } catch (e) {}
+  }, [])
+
+  useEffect(() => {
+    if (!mounted) return
     const el = document.documentElement
     const apply = (t) => {
       if (t === 'system') {
@@ -32,10 +36,10 @@ export default function ThemeProvider({ children }) {
 
     apply(theme)
     try { localStorage.setItem('theme', theme) } catch (e) {}
-  }, [theme])
+  }, [theme, mounted])
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme }}>
+    <ThemeContext.Provider value={{ theme, setTheme, mounted }}>
       {children}
     </ThemeContext.Provider>
   )

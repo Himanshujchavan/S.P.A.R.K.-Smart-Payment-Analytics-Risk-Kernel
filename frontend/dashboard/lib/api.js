@@ -125,7 +125,7 @@ function makeRings() {
 function isoMinusHours(h) { return new Date(Date.now() - h * 3_600_000).toISOString() }
 
 function makeAudit() {
-  const actions = ['Allowed', 'Challenged', 'Blocked']
+  const actions = ['allow', 'challenge', 'block']
   const triggers = ['Model score', 'Ring membership', 'Velocity spike', 'New device + high amount', 'BIN risk list']
   const reasons = [
     'Risk score 0.81 exceeded Block threshold; ring_3 membership confirmed.',

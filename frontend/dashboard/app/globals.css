@@ -52,6 +52,11 @@ button:focus-visible {
   background: var(--bg-surface);
   border: 1px solid var(--border-hairline);
   border-radius: 8px;
+  transition: border-color var(--hover-duration) var(--page-trans-ease), box-shadow var(--hover-duration) var(--page-trans-ease);
+}
+
+.card:hover {
+  border-color: color-mix(in srgb, var(--accent-spark) 25%, var(--border-hairline));
 }
 
 .surface-raised {
@@ -59,8 +64,17 @@ button:focus-visible {
   box-shadow: var(--card-elevation-shadow);
 }
 
+/* Data Table Rows */
+.spark-data-row {
+  transition: background var(--hover-duration) var(--page-trans-ease);
+}
+
+.spark-data-row:hover {
+  background: var(--bg-surface) !important;
+}
+
 /* Scrollbar polish for webkit browsers */
-::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
   background: var(--border-hairline);

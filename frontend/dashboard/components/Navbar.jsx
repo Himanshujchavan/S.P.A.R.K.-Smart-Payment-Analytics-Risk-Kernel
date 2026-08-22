@@ -36,28 +36,30 @@ function NavGroup({ items, pathname, onNavigate }) {
             href={item.href}
             onClick={onNavigate}
             style={{
-              padding: '6px 10px',
-              borderRadius: 6,
-              fontSize: 13,
-              fontWeight: 500,
-              color: active ? 'var(--text-primary)' : 'var(--text-secondary)',
-              background: active ? 'var(--bg-surface)' : 'transparent',
-              textDecoration: 'none',
-              transition: 'background var(--hover-duration) var(--page-trans-ease), color var(--hover-duration) var(--page-trans-ease)',
-            }}
-          >
-            {item.label}
-          </Link>
-        )
-      })}
-    </div>
-  )
+            padding: '6px 12px',
+            borderRadius: 6,
+            fontSize: 13,
+            fontWeight: active ? 600 : 500,
+            color: active ? 'var(--text-primary)' : 'var(--text-secondary)',
+            background: active ? 'color-mix(in srgb, var(--accent-spark) 12%, var(--bg-surface))' : 'transparent',
+            border: active ? '1px solid color-mix(in srgb, var(--accent-spark) 30%, transparent)' : '1px solid transparent',
+            textDecoration: 'none',
+            transition: 'all var(--hover-duration) var(--page-trans-ease)',
+          }}
+        >
+          {item.label}
+        </Link>
+      )
+    })}
+  </div>
+)
 }
 
 export default function Navbar() {
   const pathname = usePathname()
-  const { theme, setTheme } = useContext(ThemeContext) || { theme: 'light', setTheme: () => {} }
+  const { theme, setTheme, mounted } = useContext(ThemeContext) || { theme: 'light', setTheme: () => {}, mounted: false }
   const cycleTheme = () => setTheme(theme === 'light' ? 'dark' : theme === 'dark' ? 'system' : 'light')
+  const displayTheme = mounted ? theme : 'light'
 
   return (
     <header
@@ -65,9 +67,10 @@ export default function Navbar() {
         position: 'sticky',
         top: 0,
         zIndex: 50,
-        background: 'var(--bg-base)',
+        background: 'color-mix(in srgb, var(--bg-base) 82%, transparent)',
         borderBottom: '1px solid var(--border-hairline)',
-        backdropFilter: 'saturate(180%) blur(6px)',
+        backdropFilter: 'saturate(180%) blur(12px)',
+        WebkitBackdropFilter: 'saturate(180%) blur(12px)',
       }}
     >
       <div
@@ -116,6 +119,7 @@ export default function Navbar() {
           <button
             onClick={cycleTheme}
             aria-label="Toggle theme"
+            suppressHydrationWarning
             style={{
               padding: '6px 10px',
               borderRadius: 6,
@@ -126,7 +130,7 @@ export default function Navbar() {
               cursor: 'pointer',
             }}
           >
-            {theme === 'light' ? '☀' : theme === 'dark' ? '☾' : '◐'} {theme}
+            {displayTheme === 'light' ? '☀' : displayTheme === 'dark' ? '☾' : '◐'} {displayTheme}
           </button>
           <Link
             href="/profile"

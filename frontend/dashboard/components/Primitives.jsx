@@ -1,8 +1,6 @@
 // Shared visual primitives for the dashboard — keeps every page aligned
 // to the same design tokens (colors, spacing, radii) defined in styles/tokens.css.
 
-'use client'
-
 import { TIER_META } from '../lib/types'
 
 export function Card({ title, subtitle, action, children, style }) {
@@ -69,7 +67,11 @@ export function StatTile({ label, value, delta, trend, hint }) {
 }
 
 export function TierBadge({ tier, withDot = true }) {
-  const meta = TIER_META[tier]
+  const normalizedKey = typeof tier === 'string' ? tier.toLowerCase().replace(/ed$/, '') : ''
+  const meta = TIER_META[normalizedKey] || TIER_META[tier] || {
+    label: typeof tier === 'string' ? tier.charAt(0).toUpperCase() + tier.slice(1) : 'Unknown',
+    color: 'var(--text-secondary)',
+  }
   return (
     <span
       style={{
@@ -276,13 +278,12 @@ export function DataTable({ columns, rows, empty = 'No records to show', getRowH
               rows.map((row, i) => (
                 <tr
                   key={row.id || i}
+                  className="spark-data-row"
                   style={{
                     borderBottom: '1px solid var(--border-hairline)',
                     cursor: getRowHref ? 'pointer' : 'default',
                     transition: 'background var(--hover-duration) var(--page-trans-ease)',
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--bg-surface)')}
-                  onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                 >
                   {columns.map((c) => (
                     <td

@@ -134,32 +134,48 @@ spark/
 │   ├── requirements.txt
 │   └── Dockerfile
 │
-├── frontend/                           # Next.js dashboard
+├── frontend/dashboard/                 # Next.js 16 + React 19 dashboard
 │   ├── app/
-│   │   ├── page.tsx                     # live transaction feed
+│   │   ├── page.jsx                    # Dashboard home (KPIs, tier chart, drift sparkline, live feed)
+│   │   ├── transactions/
+│   │   │   ├── page.jsx                # Searchable transactions ledger with decision filters
+│   │   │   └── [txn_id]/page.jsx       # Transaction detail (SHAP features, counterfactual flip, user info)
 │   │   ├── metrics/
-│   │   │   └── page.tsx                  # precision/recall/cost curve panel
+│   │   │   └── page.jsx                # Cost curve chart (3-tier vs binary), per-tier metrics & confusion matrix
 │   │   ├── rings/
-│   │   │   └── page.tsx                  # ring explorer (graph visualization)
+│   │   │   ├── page.jsx                # Abuse ring explorer (density, flagged amount, status)
+│   │   │   └── [ring_id]/page.jsx      # SVG cluster graph visualization & ring member transactions
 │   │   ├── audit/
-│   │   │   └── page.tsx                  # audit trail search/viewer
-│   │   ├── layout.tsx
-│   │   └── globals.css
+│   │   │   └── page.jsx                # Compliance audit trail viewer with trigger rule filters
+│   │   ├── model-health/
+│   │   │   └── page.jsx                # Model card, 30-day PSI drift monitor & feature drift table
+│   │   ├── simulation/
+│   │   │   └── page.jsx                # Traffic load simulator (rate, duration, scenario, p50/p95/p99 latency)
+│   │   ├── settings/
+│   │   │   └── page.jsx                # Threshold calibrator, theme switcher, API keys & webhook settings
+│   │   ├── profile/
+│   │   │   └── page.jsx                # Risk manager profile details & security info
+│   │   ├── login/page.jsx              # Merchant login page
+│   │   ├── signup/page.jsx             # Onboarding registration page
+│   │   ├── forgot-password/page.jsx    # Password recovery request page
+│   │   ├── layout.jsx                  # Root layout with ThemeProvider & sticky Navbar
+│   │   └── globals.css                 # CSS custom property tokens & glassmorphism styling
 │   ├── components/
-│   │   ├── TransactionFeed.tsx
-│   │   ├── MetricsPanel.tsx
-│   │   ├── CostCurveChart.tsx
-│   │   ├── RingGraph.tsx
-│   │   └── AuditTrailViewer.tsx
+│   │   ├── Primitives.jsx              # Server-compatible UI primitives (Card, DataTable, ScoreBar, TierBadge)
+│   │   ├── Navbar.jsx                  # Glassmorphic header navigation & theme switcher
+│   │   ├── TransactionFeed.jsx         # Live auto-refreshing transaction stream
+│   │   ├── CostCurveChart.jsx          # Recharts cost curve comparison chart
+│   │   ├── MetricsPanel.jsx            # Per-tier metrics & 3x3 confusion matrix
+│   │   ├── RingGraph.jsx               # SVG radial ring cluster graph
+│   │   ├── AuditTrailViewer.jsx        # Compliance search & filter viewer
+│   │   └── ThemeProvider.jsx           # Dark/Light theme context provider
 │   ├── lib/
-│   │   ├── api.ts                       # backend API client
-│   │   └── types.ts                     # shared TS types
-│   ├── public/
-│   ├── package.json
-│   ├── tailwind.config.ts
-│   └── Dockerfile
+│   │   ├── api.js                      # Async mock API client & seed generators
+│   │   └── types.js                    # Shared JSDoc typedefs & tier metadata
+│   └── package.json
 │
 └── docs/
+    ├── page_copy_spec.md               # full Page Content & Copy Specification (all 13 pages)
     ├── architecture.md                 # full technical architecture doc
     └── demo_script.md                  # walkthrough script for judges
 ```

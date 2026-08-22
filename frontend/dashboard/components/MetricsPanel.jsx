@@ -70,25 +70,25 @@ function ConfusionMatrix() {
           Pred {l}
         </div>
       ))}
-      {labels.map((row, i) => (
-        <RowFragment key={row} row={row} cells={cells[i]} max={max} />
+      {labels.map((row, rowIndex) => (
+        <RowFragment key={row} row={row} rowIndex={rowIndex} cells={cells[rowIndex]} max={max} />
       ))}
     </div>
   )
 }
 
-function RowFragment({ row, cells, max }) {
+function RowFragment({ row, rowIndex, cells, max }) {
   return (
     <>
       <div style={{ fontSize: 11, color: 'var(--text-secondary)', textTransform: 'uppercase', alignSelf: 'center' }}>
         Actual {row}
       </div>
-      {cells.map((v, i) => {
+      {cells.map((v, colIndex) => {
         const intensity = v / max
-        const isDiagonal = i === cells.indexOf(v)
+        const isDiagonal = rowIndex === colIndex
         return (
           <div
-            key={i}
+            key={colIndex}
             style={{
               padding: 14,
               borderRadius: 6,
