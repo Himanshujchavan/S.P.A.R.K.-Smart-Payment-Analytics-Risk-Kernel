@@ -1,0 +1,1 @@
+Dashboard Next.js app scaffold.\n\nRun in `frontend/dashboard`:\n\n```bash\nnpm install\nnpm run dev\n```\n
