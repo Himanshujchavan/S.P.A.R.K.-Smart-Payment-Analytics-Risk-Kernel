@@ -1,6 +1,7 @@
 # api/services/auth_service.py
 # Core authentication logic (Signup, Login, OAuth, Phone OTP, Refresh, Logout, Invite, Audit Logging)
 
+import logging
 import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Optional
@@ -27,30 +28,39 @@ from api.schemas.auth import (
     TokenResponse,
 )
 
+logger = logging.getLogger(__name__)
+
 
 def log_auth_audit(
     db: Session, user_id: Optional[uuid.UUID], action: str, reasoning: str
 ):
-    """Log authentication events to audit_log table."""
+    """Log authentication events to audit_log table.
+
+    Writes a row with event_type='auth' and actor_user_id=user_id, leaving
+    txn_id NULL — auth events are not transaction events. Failures are
+    logged so the caller can decide how to surface them.
+    """
     try:
-        dummy_txn_id = user_id or uuid.uuid4()
         query = text("""
-            INSERT INTO audit_log (audit_id, txn_id, action, triggered_by, reasoning, created_at)
-            VALUES (:audit_id, :txn_id, :action, :triggered_by, :reasoning, NOW())
+            INSERT INTO audit_log
+                (audit_id, event_type, actor_user_id, action, triggered_by, reasoning, created_at)
+            VALUES
+                (:audit_id, 'auth', :actor_user_id, :action, :triggered_by, :reasoning, NOW())
         """)
         db.execute(
             query,
             {
                 "audit_id": uuid.uuid4(),
-                "txn_id": dummy_txn_id,
+                "actor_user_id": user_id,
                 "action": action,
                 "triggered_by": "auth_service",
                 "reasoning": reasoning,
             },
         )
         db.commit()
-    except Exception:
+    except Exception as e:
         db.rollback()
+        logger.error(f"Failed to write auth audit row (action={action}): {e}")
 
 
 def signup_email(db: Session, req: SignupRequest) -> TokenResponse:
@@ -392,6 +402,13 @@ def refresh_tokens(db: Session, refresh_token: str) -> TokenResponse:
 
 
 def logout(db: Session, access_token: str, refresh_token: Optional[str] = None):
+    """Revoke the caller's access token and (optionally) their refresh session.
+
+    Token decode failures are non-fatal — the caller may already be in a
+    partially-valid state. We still log the event with whatever user_id we
+    could extract, or skip audit if the token is unparseable.
+    """
+    user_id: Optional[uuid.UUID] = None
     try:
         payload = decode_token(access_token)
         user_id = uuid.UUID(payload["sub"])
@@ -402,18 +419,27 @@ def logout(db: Session, access_token: str, refresh_token: Optional[str] = None):
             now_ts = int(datetime.now(timezone.utc).timestamp())
             ttl = max(1, exp - now_ts)
             blacklist_token(jti, ttl)
+    except Exception as e:
+        # Token was unparseable/expired/already-revoked. We still try to
+        # clean up the refresh-token row if the caller provided one, since
+        # they may have a valid refresh token but a dead access token.
+        logger.warning(f"logout: access token decode failed ({e}); continuing with refresh cleanup only")
 
-        if refresh_token:
+    if refresh_token:
+        try:
             rf_hash = hash_token(refresh_token)
             db.execute(
                 text("DELETE FROM sessions WHERE refresh_token_hash = :rf_hash"),
                 {"rf_hash": rf_hash},
             )
             db.commit()
+        except Exception as e:
+            db.rollback()
+            logger.error(f"logout: failed to delete session row: {e}")
+            raise
 
+    if user_id is not None:
         log_auth_audit(db, user_id, "auth.logout", "User logged out.")
-    except Exception:
-        pass
 
 
 def create_invite(

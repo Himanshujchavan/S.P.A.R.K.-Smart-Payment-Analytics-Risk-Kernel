@@ -1,8 +1,13 @@
 # api/core/db.py
-# SQLAlchemy database engine, session factory, and connection pool configuration
+# SQLAlchemy database engine and session factory.
+#
+# We deliberately avoid `declarative_base()` for now — the codebase uses
+# `sqlalchemy.text()` raw SQL for queries so all schema lives in migrations,
+# not in Python ORM models. Add ORM models later if/when they earn their
+# keep (e.g. complex relationships on the graph side).
 
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, declarative_base
+from sqlalchemy.orm import sessionmaker
 from api.core.config import settings
 
 # Configure SQLAlchemy engine with connection pooling and pre-ping to handle stale connections
@@ -11,7 +16,6 @@ engine = create_engine(
 )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-Base = declarative_base()
 
 
 def get_db():
