@@ -10,9 +10,17 @@ from slowapi.util import get_remote_address
 from api.core.config import settings
 from api.core.redis_client import limiter
 from api.routers.auth import router as auth_router
+from api.routers.score import router as score_router
+from api.routers.transactions import router as transactions_router
+from api.routers.rings import router as rings_router
+from api.routers.audit import router as audit_router
 
 app = FastAPI(
-    title=settings.PROJECT_NAME, version="2.0.0", docs_url="/docs", redoc_url="/redoc"
+    title=settings.PROJECT_NAME,
+    version="2.0.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
+    openapi_url=f"{settings.API_V1_STR}/openapi.json",
 )
 
 # Attach SlowAPI rate limiter state and middleware
@@ -41,6 +49,10 @@ app.add_middleware(
 
 # Include routers
 app.include_router(auth_router, prefix=settings.API_V1_STR)
+app.include_router(score_router, prefix=settings.API_V1_STR)
+app.include_router(transactions_router, prefix=settings.API_V1_STR)
+app.include_router(rings_router, prefix=settings.API_V1_STR)
+app.include_router(audit_router, prefix=settings.API_V1_STR)
 
 
 @app.get("/")
