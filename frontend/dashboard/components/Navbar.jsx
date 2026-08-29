@@ -13,6 +13,7 @@ const PRIMARY = [
   { href: '/transactions', label: 'Transactions' },
   { href: '/metrics', label: 'Metrics' },
   { href: '/rings', label: 'Rings' },
+  { href: '/score', label: 'Scoring' },
 ]
 
 const INVESTIGATE = [

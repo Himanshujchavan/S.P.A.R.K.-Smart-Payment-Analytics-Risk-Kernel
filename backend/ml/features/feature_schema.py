@@ -155,3 +155,9 @@ def feature_groups() -> dict[str, list[str]]:
     for c in CATEGORICAL_FEATURES:
         out.setdefault(c.group, []).append(c.name)
     return out
+
+
+FEATURE_DESCRIPTIONS: Final[dict[str, str]] = {
+    **{name: desc for name, _default, _group, desc in NUMERIC_FEATURES},
+    **{c.name: c.description for c in CATEGORICAL_FEATURES},
+}
