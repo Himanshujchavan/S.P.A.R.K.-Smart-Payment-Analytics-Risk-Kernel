@@ -212,6 +212,80 @@ function delay(value, ms = 80) {
 }
 
 export const api = {
+  // Existing mock functions
+  listTransactions: () => delay(makeTransactions()),
+  getTransaction: (id) => delay(makeTransactions().find((t) => t.id === id) || null),
+  listRings: () => delay(makeRings()),
+  getRing: (id) => delay(makeRings().find((r) => r.id === id) || null),
+  listAudit: () => delay(makeAudit()),
+  getMetrics: () => delay(makeMetrics()),
+  getCostCurve: () => delay(makeCostCurve()),
+  getDrift: () => delay(makeDrift()),
+  getFeatureDrift: () => delay(makeFeatureDrift()),
+  getDashboardKpis: () => delay(makeDashboardKpis()),
+  startSimulation: ({ rate, duration, scenario }) =>
+    delay({ runId: `sim_${Date.now().toString(36)}`, rate, duration, scenario, startedAt: now().toISOString() }),
+
+  // Phase 7 new endpoints (real fetch implementations – fallback to mock when unavailable)
+  scoreTransaction: async (payload) => {
+    try {
+      const resp = await fetch('/api/v1/score', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (!resp.ok) throw new Error('Score request failed');
+      return await resp.json();
+    } catch (e) {
+      console.warn('scoreTransaction fallback to mock due to', e);
+      return delay({ score: 42.3, tier: 'allow', shap: [], counterfactual: '' });
+    }
+  },
+  getRingGraph: async (id) => {
+    try {
+      const resp = await fetch(`/api/v1/rings/${id}/graph`);
+      if (!resp.ok) throw new Error('Ring graph request failed');
+      return await resp.json();
+    } catch (e) {
+      console.warn('getRingGraph fallback to mock', e);
+      return delay({ nodes: [], edges: [] });
+    }
+  },
+  listAudit: async (params = {}) => {
+    const q = new URLSearchParams(params).toString();
+    try {
+      const resp = await fetch(`/api/v1/audit?${q}`);
+      if (!resp.ok) throw new Error('Audit request failed');
+      return await resp.json();
+    } catch (e) {
+      console.warn('listAudit fallback to mock', e);
+      return delay(makeAudit());
+    }
+  },
+  getModelHealth: async () => {
+    try {
+      const resp = await fetch('/api/v1/model/health');
+      if (!resp.ok) throw new Error('Model health request failed');
+      const data = await resp.json();
+      if (data.access_token && typeof data.access_token === 'string') {
+        try { return JSON.parse(data.access_token); } catch { return data; }
+      }
+      return data;
+    } catch (e) {
+      console.warn('getModelHealth fallback to mock', e);
+      return delay({
+        model: {
+          version: 'xgboost-v2.4.1',
+          trained_on: '2025-08-01',
+          last_retrained: '2026-08-08',
+          accuracy: 0.978,
+        },
+        psi: makeDrift(),
+        feature_drift: makeFeatureDrift(),
+      });
+    }
+  },
+};
   listTransactions: () => delay(makeTransactions()),
   getTransaction: (id) => delay(makeTransactions().find((t) => t.id === id) || null),
   listRings: () => delay(makeRings()),
