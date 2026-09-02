@@ -210,6 +210,7 @@ def main() -> None:
         "n_challenge": 0,
         "n_allow": 0,
     }
+    cost_curve = []
     n_scored = 0
     for challenge_t in grid:
         for allow_t in grid:
@@ -222,6 +223,13 @@ def main() -> None:
                 args.c_fn_allow, args.c_fn_challenge,
             )
             n_scored += 1
+
+            # Record cost for the curve (using challenge_t as the x-axis for a simplified view)
+            cost_curve.append({
+                "threshold": float(challenge_t),
+                "cost": float(cost)
+            })
+
             if cost < best["cost"]:
                 pred_best = pred
                 best = {
@@ -233,6 +241,7 @@ def main() -> None:
                     "n_allow": int((pred_best == 0).sum()),
                 }
     logger.info(f"  grid points evaluated: {n_scored}")
+
     logger.info(f"  best: allow={best['allow']:.3f}  "
                 f"challenge={best['challenge']:.3f}  cost={_rs(best['cost'])}")
 
@@ -276,6 +285,7 @@ def main() -> None:
     }
     metadata = dict(bundle["metadata"])
     metadata["thresholds"] = new_thresholds
+    metadata["cost_curve"] = cost_curve
     metadata["calibrated_at"] = pd.Timestamp.now(tz="UTC").isoformat()
 
     out_dir = save_artifact(
@@ -285,6 +295,7 @@ def main() -> None:
         thresholds=new_thresholds,
         metadata=metadata,
     )
+
     logger.info(f"Updated artifact at {out_dir} with calibrated thresholds.")
 
     # Echo to stdout for piping

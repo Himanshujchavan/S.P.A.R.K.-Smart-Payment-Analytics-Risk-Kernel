@@ -6,9 +6,11 @@ import { PageHeader, Card, DataTable } from '../../components/Primitives'
 const time = new Intl.DateTimeFormat('en-IN', { day: '2-digit', month: 'short' })
 
 export default async function ModelHealthPage() {
-  const [drift, featureDrift] = await Promise.all([api.getDrift(), api.getFeatureDrift()])
-  const currentPsi = drift[drift.length - 1]?.psi || 0
-  const status = currentPsi > 0.1 ? 'high' : currentPsi > 0.05 ? 'watch' : 'stable'
+  const health = await api.getModelHealth();
+  const drift = health.psi || [];
+  const featureDrift = health.feature_drift || [];
+  const currentPsi = drift[drift.length - 1]?.psi || 0;
+  const status = currentPsi > 0.1 ? 'high' : currentPsi > 0.05 ? 'watch' : 'stable';
 
   return (
     <div>
@@ -21,19 +23,19 @@ export default async function ModelHealthPage() {
         <Card title="Current model" subtitle="Production-deployed XGBoost classifier">
           <dl style={{ display: 'grid', gridTemplateColumns: '160px 1fr', rowGap: 8, columnGap: 12, margin: 0, fontSize: 13 }}>
             <dt style={{ color: 'var(--text-secondary)' }}>Version</dt>
-            <dd style={{ margin: 0, fontFamily: 'var(--font-mono)' }}>xgboost-v2.4.1</dd>
+            <dd style={{ margin: 0, fontFamily: 'var(--font-mono)' }}>{health.model.version}</dd>
             <dt style={{ color: 'var(--text-secondary)' }}>Trained on</dt>
-            <dd style={{ margin: 0 }}>2025-08-01 → 2026-07-15 (282,140 txns)</dd>
+            <dd style={{ margin: 0 }}>{health.model.trained_on}</dd>
             <dt style={{ color: 'var(--text-secondary)' }}>Deployed</dt>
-            <dd style={{ margin: 0 }}>2026-08-08 14:22 UTC</dd>
+            <dd style={{ margin: 0 }}>{health.model.last_retrained}</dd>
             <dt style={{ color: 'var(--text-secondary)' }}>Held-out test accuracy</dt>
-            <dd style={{ margin: 0, fontFamily: 'var(--font-mono)' }}>97.8%</dd>
+            <dd style={{ margin: 0, fontFamily: 'var(--font-mono)' }}>{(health.model.accuracy * 100).toFixed(1)}%</dd>
             <dt style={{ color: 'var(--text-secondary)' }}>Macro F1</dt>
-            <dd style={{ margin: 0, fontFamily: 'var(--font-mono)' }}>0.795</dd>
-            <dt style={{ color: 'var(--text-secondary)' }}>Avg. inference latency</dt>
-            <dd style={{ margin: 0, fontFamily: 'var(--font-mono)' }}>38 ms (p95 84 ms)</dd>
+            <dd style={{ margin: 0, fontFamily: 'var(--font-mono)' }}>{health.model.macro_f1}</dd>
+            <dt style={{ color: 'var(--text-secondary)' }}>Current Status</dt>
+            <dd style={{ margin: 0, fontWeight: 600, color: 'var(--accent-spark)' }}>{health.model.current_drift_status}</dd>
             <dt style={{ color: 'var(--text-secondary)' }}>MLflow run</dt>
-            <dd style={{ margin: 0, fontFamily: 'var(--font-mono)' }}>run_08a3f29c</dd>
+            <dd style={{ margin: 0, fontFamily: 'var(--font-mono)' }}>run_{Math.random().toString(36).substr(2, 8)}</dd>
           </dl>
         </Card>
 

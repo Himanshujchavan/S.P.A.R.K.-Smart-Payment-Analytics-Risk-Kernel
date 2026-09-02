@@ -17,9 +17,10 @@ import logging
 import os
 import shutil
 import sys
+import numpy as np
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Optional
 
 _BACKEND_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 if _BACKEND_DIR not in sys.path:
@@ -45,6 +46,7 @@ def save_artifact(
     encoders: dict[str, list[str]],
     thresholds: dict[str, float],
     metadata: dict[str, Any],
+    baseline_scores: Optional[np.ndarray] = None,
 ) -> str:
     """Save the full model bundle. Returns the directory path."""
     import xgboost as xgb
@@ -67,6 +69,10 @@ def save_artifact(
     metadata = {**metadata, "version": version, "saved_at": datetime.now(timezone.utc).isoformat()}
     with open(os.path.join(out_dir, "metadata.json"), "w", encoding="utf-8") as f:
         json.dump(metadata, f, indent=2, default=str)
+
+    # Baseline scores for PSI drift monitoring
+    if baseline_scores is not None:
+        np.save(os.path.join(out_dir, "baseline_scores.npy"), baseline_scores)
 
     logger.info(f"Saved model artifact to {out_dir}")
     return out_dir

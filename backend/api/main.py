@@ -14,6 +14,9 @@ from api.routers.score import router as score_router
 from api.routers.transactions import router as transactions_router
 from api.routers.rings import router as rings_router
 from api.routers.audit import router as audit_router
+from api.routers.model_health import router as model_health_router
+from api.routers.analytics import router as analytics_router
+from api.routers.simulation import router as simulation_router
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
@@ -53,6 +56,10 @@ app.include_router(score_router, prefix=settings.API_V1_STR)
 app.include_router(transactions_router, prefix=settings.API_V1_STR)
 app.include_router(rings_router, prefix=settings.API_V1_STR)
 app.include_router(audit_router, prefix=settings.API_V1_STR)
+app.include_router(model_health_router, prefix=settings.API_V1_STR)
+app.include_router(analytics_router, prefix=settings.API_V1_STR)
+app.include_router(simulation_router, prefix=settings.API_V1_STR)
+
 
 
 @app.get("/")

@@ -333,6 +333,7 @@ def main() -> None:
         encoders=encoders,
         thresholds=placeholder_thresholds,
         metadata=metadata,
+        baseline_scores=y_pred_test,
     )
     logger.info(f"Saved artifact to {artifact_dir}")
 

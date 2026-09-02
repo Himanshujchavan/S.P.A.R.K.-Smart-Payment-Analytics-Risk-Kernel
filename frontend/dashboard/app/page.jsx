@@ -8,12 +8,13 @@ import { PageHeader, StatTile, Card, Button } from '../components/Primitives'
 import { TIER_META } from '../lib/types'
 
 export default async function HomePage() {
-  const [kpis, rings, drift] = await Promise.all([
+  const [kpis, rings, health] = await Promise.all([
     api.getDashboardKpis(),
     api.listRings(),
-    api.getDrift(),
+    api.getModelHealth(),
   ])
 
+  const drift = health.psi || []
   const total = kpis.tierBreakdown.allow + kpis.tierBreakdown.challenge + kpis.tierBreakdown.block
   const currentPsi = drift.length ? drift[drift.length - 1].psi : 0
   const driftStatus = currentPsi > 0.1 ? 'high' : currentPsi > 0.05 ? 'watch' : 'stable'

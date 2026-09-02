@@ -568,7 +568,7 @@ def build_inference_features(
     return pd.DataFrame([row])[all_feature_names()]
 
 
-def _ring_features_for_inference(db: Session, txn: dict) -> dict[str, float]:
+def _ring_features_for_inference(db: Optional[Session], txn: dict) -> dict[str, float]:
     """Look up ring signals for one transaction. Cheap: 2 small queries."""
     out = {
         "ring_member_count": 0.0,
@@ -579,7 +579,7 @@ def _ring_features_for_inference(db: Session, txn: dict) -> dict[str, float]:
         "on_ring_shared_bin": 0.0,
     }
     buyer = txn.get("buyer_id")
-    if buyer is None:
+    if buyer is None or db is None:
         return out
     rows = db.execute(text("""
         SELECT ring_id, member_count, density_score, flagged_amount,
