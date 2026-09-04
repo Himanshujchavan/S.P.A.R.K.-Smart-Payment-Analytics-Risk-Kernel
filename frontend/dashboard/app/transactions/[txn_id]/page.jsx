@@ -32,6 +32,12 @@ export default async function TransactionDetailPage({ params }) {
   }
   const ring = txn.ringId ? (await api.listRings()).find((r) => r.id === txn.ringId) : null
 
+  // Guard against a decision value that isn't (yet) present in TIER_META,
+  // rather than letting the lookup crash the whole page. The backend now
+  // normalizes unscored transactions to 'pending', but this stays as a
+  // safety net for any future/unmapped value.
+  const tierInfo = TIER_META[txn.decision] ?? { label: txn.decision ?? 'Unknown' }
+
   return (
     <div>
       <PageHeader
@@ -48,7 +54,17 @@ export default async function TransactionDetailPage({ params }) {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 12, marginBottom: 20 }}>
         <StatTile label="Amount" value={inr.format(txn.amount)} hint={txn.method} />
         <StatTile label="Risk score" value={(txn.riskScore / 100).toFixed(2)} hint="XGBoost v2.4.1" />
-        <StatTile label="Decision" value={TIER_META[txn.decision].label} hint={`threshold ${txn.decision === 'block' ? '≥ 0.78' : txn.decision === 'challenge' ? '0.45–0.78' : '< 0.45'}`} />
+        <StatTile
+          label="Decision"
+          value={tierInfo.label}
+          hint={`threshold ${
+            txn.decision === 'block' ? '≥ 0.78' :
+            txn.decision === 'challenge' ? '0.45–0.78' :
+            txn.decision === 'allow' ? '< 0.45' :
+            txn.decision === 'pending' ? 'not yet scored' :
+            'unknown'
+          }`}
+        />
         <StatTile label="Ring membership" value={txn.ringId || '—'} hint={ring ? `${ring.memberCount} accounts` : 'no cluster'} />
       </div>
 

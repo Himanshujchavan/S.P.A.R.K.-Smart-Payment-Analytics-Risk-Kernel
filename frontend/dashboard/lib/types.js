@@ -84,4 +84,5 @@ export const TIER_META = {
   allow: { label: 'Allowed', color: 'var(--risk-allow)' },
   challenge: { label: 'Challenged', color: 'var(--risk-challenge)' },
   block: { label: 'Blocked', color: 'var(--risk-block)' },
+  pending: { label: 'Pending', color: 'var(--text-secondary)' },
 }
