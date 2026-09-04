@@ -219,10 +219,16 @@ cd backend
 pip install -r requirements.txt
 
 # run DB migrations
-psql -f db/migrations/001_init_schema.sql
-psql -f db/migrations/002_hypertable_setup.sql
-psql -f db/migrations/003_scoring_tables.sql
-psql -f db/migrations/004_graph_tables.sql
+# run DB migrations
+Get-Content db/migrations/001_init_schema.sql -Raw | docker exec -i spark-timescaledb psql -U postgres -d spark
+
+Get-Content db/migrations/002_hypertable_setup.sql -Raw | docker exec -i spark-timescaledb psql -U postgres -d spark
+
+Get-Content db/migrations/003_scoring_tables.sql -Raw | docker exec -i spark-timescaledb psql -U postgres -d spark
+
+
+Get-Content db/migrations/004_graph_tables.sql -Raw | docker exec -i spark-timescaledb psql -U postgres -d spark
+
 
 # generate synthetic data
 python data/generators/generate_transactions.py
@@ -238,6 +244,7 @@ uvicorn api.main:app --reload
 
 # --- frontend setup (new terminal) ---
 cd frontend
+cd dashboard
 npm install
 npm run dev
 # dashboard now running at http://localhost:3000

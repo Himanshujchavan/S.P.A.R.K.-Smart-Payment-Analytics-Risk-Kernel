@@ -73,7 +73,8 @@ def get_dashboard_kpis(db: Session = Depends(get_db)):
         decision_res = db.execute(
             text("SELECT decision, count(*) FROM model_scores WHERE scored_at >= CURRENT_DATE GROUP BY decision")
         ).mappings().all()
-        tier_breakdown = {r["decision"]: r["count"] for r in decision_res}
+        tier_breakdown = {tier: 0 for tier in ("allow", "challenge", "block")}
+        tier_breakdown.update({r["decision"]: r["count"] for r in decision_res})
 
         # Current PSI from latest snapshot
         psi_res = db.execute(

@@ -67,6 +67,40 @@ def _weekend(dt: datetime) -> int:
     return 1 if dt.weekday() >= 5 else 0
 
 
+def _rolling_distinct_prior(
+    frame: pd.DataFrame, group_col: str, value_col: str, window: str,
+) -> pd.Series:
+    """Count distinct prior values in a time window for each sorted group."""
+    result = pd.Series(0, index=frame.index, dtype=np.int64)
+    window_delta = pd.Timedelta(window)
+
+    for _, group in frame.groupby(group_col, sort=False):
+        timestamps = group["created_at"].to_numpy()
+        values = group[value_col].tolist()
+        counts: dict[Any, int] = defaultdict(int)
+        left = 0
+        start = 0
+
+        while start < len(group):
+            timestamp = timestamps[start]
+            while left < start and timestamps[left] < timestamp - window_delta:
+                counts[values[left]] -= 1
+                if counts[values[left]] == 0:
+                    del counts[values[left]]
+                left += 1
+
+            end = start
+            while end < len(group) and timestamps[end] == timestamp:
+                end += 1
+            result.loc[group.index[start:end]] = len(counts)
+
+            for value in values[start:end]:
+                counts[value] += 1
+            start = end
+
+    return result
+
+
 # ---------------------------------------------------------------------------
 # Velocity computation (training-time, batch SQL)
 # ---------------------------------------------------------------------------
@@ -193,11 +227,8 @@ def _velocity_features(
             .fillna(0).astype(np.int64)
         )
     # distinct buyers on this device in last 7d
-    dev_sorted["distinct_buyers_device_7d"] = (
-        g.rolling("7d", on="created_at", closed="left")["buyer_id"]
-        .nunique()
-        .reset_index(level=0, drop=True)
-        .fillna(1).astype(np.int64)
+    dev_sorted["distinct_buyers_device_7d"] = _rolling_distinct_prior(
+        dev_sorted, "device_id", "buyer_id", "7d"
     )
     # device age = days since device's first txn
     first_seen = dev_sorted.groupby("device_id")["created_at"].transform("min")
@@ -223,10 +254,7 @@ def _velocity_features(
             .fillna(0).astype(np.int64)
         )
     ip_sorted["distinct_buyers_ip_24h"] = (
-        g.rolling("24h", on="created_at", closed="left")["buyer_id"]
-        .nunique()
-        .reset_index(level=0, drop=True)
-        .fillna(1).astype(np.int64)
+        _rolling_distinct_prior(ip_sorted, "ip_address", "buyer_id", "24h")
     )
     ip_view = ip_sorted.set_index("txn_id")
     for col in ["txn_count_ip_1h", "txn_count_ip_24h", "distinct_buyers_ip_24h"]:
@@ -245,10 +273,7 @@ def _velocity_features(
             .fillna(0).astype(np.int64)
         )
     bin_sorted["distinct_buyers_card_bin_24h"] = (
-        g.rolling("24h", on="created_at", closed="left")["buyer_id"]
-        .nunique()
-        .reset_index(level=0, drop=True)
-        .fillna(1).astype(np.int64)
+        _rolling_distinct_prior(bin_sorted, "card_bin", "buyer_id", "24h")
     )
     bin_view = bin_sorted.set_index("txn_id")
     for col in ["txn_count_card_bin_1h", "txn_count_card_bin_24h",
@@ -360,7 +385,7 @@ def _ring_features(db: Session, txn_df: pd.DataFrame) -> dict[str, np.ndarray]:
         SELECT
             dr.ring_id, dr.member_count, dr.density_score, dr.flagged_amount,
             dr.shared_attribute, dr.shared_value, dr.account_ids
-        FROM detected_rings
+        FROM detected_rings AS dr
         WHERE status = 'active'
     """)).mappings().fetchall()
 

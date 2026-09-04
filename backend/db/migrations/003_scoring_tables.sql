@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS fraud_labels (
 );
 
 CREATE INDEX IF NOT EXISTS idx_fraud_labels_txn ON fraud_labels (txn_id);
+CREATE UNIQUE INDEX IF NOT EXISTS uq_fraud_labels_txn ON fraud_labels (txn_id);
 
 -- 2. Model Scores (XGBoost inference scores, decision tier & SHAP explainability)
 CREATE TABLE IF NOT EXISTS model_scores (

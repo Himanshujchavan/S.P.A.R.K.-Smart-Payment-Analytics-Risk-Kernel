@@ -15,7 +15,13 @@ export default async function HomePage() {
   ])
 
   const drift = health.psi || []
-  const total = kpis.tierBreakdown.allow + kpis.tierBreakdown.challenge + kpis.tierBreakdown.block
+  const tierBreakdown = {
+    allow: 0,
+    challenge: 0,
+    block: 0,
+    ...(kpis.tierBreakdown || {}),
+  }
+  const total = tierBreakdown.allow + tierBreakdown.challenge + tierBreakdown.block
   const currentPsi = drift.length ? drift[drift.length - 1].psi : 0
   const driftStatus = currentPsi > 0.1 ? 'high' : currentPsi > 0.05 ? 'watch' : 'stable'
 
@@ -67,7 +73,7 @@ export default async function HomePage() {
           title="Decisions by tier — last 24 hours"
           subtitle={`${total.toLocaleString('en-IN')} transactions scored`}
         >
-          <DecisionsTierBars breakdown={kpis.tierBreakdown} total={total} />
+          <DecisionsTierBars breakdown={tierBreakdown} total={total} />
         </Card>
         <Card
           title="Drift monitor"

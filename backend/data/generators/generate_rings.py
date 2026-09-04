@@ -56,8 +56,8 @@ SHARED_ATTR_WEIGHTS = [0.65, 0.20, 0.15]
 
 
 def make_ring_id(index: int) -> uuid.UUID:
-    """Ring IDs use the `r` prefix: r0000000-0000-4000-8000-NNNN..."""
-    return uuid.UUID(f"r{index:012d}".rjust(32, "0"))
+    """Return a deterministic UUID for a ring index."""
+    return uuid.uuid5(uuid.NAMESPACE_URL, f"spark:ring:{index}")
 
 
 def pick_ring_members(
@@ -107,10 +107,10 @@ def assign_shared_attribute(
 
 
 def create_shared_device(
-    db, ring_idx: int, rng: random.Random, os_browser: str,
+    db, ring_idx: int, rng: random.Random, os_browser: tuple[str, str],
 ) -> tuple[uuid.UUID, str]:
     """Create a brand-new device row for this ring. Returns (device_id, fingerprint)."""
-    os_name, browser = os_browser.split("|", 1)
+    os_name, browser = os_browser
     new_device_idx = SEED_DEVICE_COUNT + 1 + ring_idx  # offsets well past the seed range
     fingerprint = f"fp_ring_dev_{new_device_idx:06d}_{rng.randint(1000, 9999)}"
     did = device_id(new_device_idx)
@@ -223,7 +223,7 @@ def write_ring_row(
                 (ring_id, member_count, density_score, shared_attribute,
                  shared_value, status, flagged_amount, account_ids, detected_at)
             VALUES
-                (:rid, :n, :d, :a, :v, 'active', :amt, :ids::jsonb, NOW())
+                (:rid, :n, :d, :a, :v, 'active', :amt, CAST(:ids AS jsonb), NOW())
             ON CONFLICT (ring_id) DO UPDATE
                 SET member_count = EXCLUDED.member_count,
                     density_score = EXCLUDED.density_score,
