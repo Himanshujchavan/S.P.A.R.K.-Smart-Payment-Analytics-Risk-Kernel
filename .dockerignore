@@ -1,7 +1,0 @@
-node_modules
-.git
-.env
-frontend/dashboard/node_modules
-*.log
-.next
-Dockerfile
