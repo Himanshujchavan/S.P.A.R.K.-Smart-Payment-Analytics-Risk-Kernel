@@ -1,0 +1,166 @@
+// Top navigation — groups S.P.A.R.K. by task flow (Monitor / Investigate / Operate / Account).
+// Uses Next.js <Link> for client-side navigation, and exposes the theme toggle.
+
+'use client'
+
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { useContext, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { api } from '../lib/api'
+import { ThemeContext } from './ThemeProvider'
+
+const PRIMARY = [
+  { href: '/', label: 'Dashboard' },
+  { href: '/transactions', label: 'Transactions' },
+  { href: '/metrics', label: 'Metrics' },
+  { href: '/rings', label: 'Rings' },
+  { href: '/score', label: 'Scoring' },
+]
+
+const INVESTIGATE = [
+  { href: '/audit', label: 'Audit trail' },
+  { href: '/model-health', label: 'Model health' },
+]
+
+const OPERATE = [
+  { href: '/simulation', label: 'Simulation' },
+  { href: '/settings', label: 'Settings' },
+]
+
+function NavGroup({ items, pathname, onNavigate }) {
+  return (
+    <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
+      {items.map((item) => {
+        const active = item.href === '/' ? pathname === '/' : pathname?.startsWith(item.href)
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            onClick={onNavigate}
+            style={{
+            padding: '6px 12px',
+            borderRadius: 6,
+            fontSize: 13,
+            fontWeight: active ? 600 : 500,
+            color: active ? 'var(--text-primary)' : 'var(--text-secondary)',
+            background: active ? 'color-mix(in srgb, var(--accent-spark) 12%, var(--bg-surface))' : 'transparent',
+            border: active ? '1px solid color-mix(in srgb, var(--accent-spark) 30%, transparent)' : '1px solid transparent',
+            textDecoration: 'none',
+            transition: 'all var(--hover-duration) var(--page-trans-ease)',
+          }}
+        >
+          {item.label}
+        </Link>
+      )
+    })}
+  </div>
+)
+}
+
+export default function Navbar() {
+  const pathname = usePathname()
+  const { theme, setTheme, mounted } = useContext(ThemeContext) || { theme: 'light', setTheme: () => {}, mounted: false }
+  const router = useRouter()
+  const [loggingOut, setLoggingOut] = useState(false)
+  const logout = async () => { setLoggingOut(true); try { const refresh=localStorage.getItem('spark_refresh_token'); if(refresh) await api.logout(refresh) } catch {} finally { localStorage.removeItem('spark_access_token'); localStorage.removeItem('spark_refresh_token'); document.cookie='spark_access_token=; Path=/; Max-Age=0; SameSite=Lax'; router.replace('/login'); router.refresh(); setLoggingOut(false) } }
+  const cycleTheme = () => setTheme(theme === 'light' ? 'dark' : theme === 'dark' ? 'system' : 'light')
+  const displayTheme = mounted ? theme : 'light'
+
+  return (
+    <header
+      style={{
+        position: 'sticky',
+        top: 0,
+        zIndex: 50,
+        background: 'color-mix(in srgb, var(--bg-base) 82%, transparent)',
+        borderBottom: '1px solid var(--border-hairline)',
+        backdropFilter: 'saturate(180%) blur(12px)',
+        WebkitBackdropFilter: 'saturate(180%) blur(12px)',
+      }}
+    >
+      <div
+        style={{
+          maxWidth: 1400,
+          margin: '0 auto',
+          padding: '10px 20px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 16,
+        }}
+      >
+        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
+          <span
+            style={{
+              width: 26,
+              height: 26,
+              borderRadius: 6,
+              background: 'linear-gradient(135deg, var(--navy-primary), var(--accent-spark))',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#fff',
+              fontWeight: 700,
+              fontSize: 12,
+              fontFamily: 'var(--font-mono)',
+            }}
+          >
+            S
+          </span>
+          <span style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.1 }}>
+            <span style={{ fontFamily: 'var(--font-display)', fontWeight: 600, color: 'var(--text-primary)', fontSize: 14 }}>
+              S.P.A.R.K.
+            </span>
+            <span style={{ fontSize: 10, color: 'var(--text-secondary)' }}>Smart Payment Analytics & Risk Kernel</span>
+          </span>
+        </Link>
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
+          <NavGroup items={PRIMARY} pathname={pathname} />
+          <span style={{ color: 'var(--border-hairline)' }}>|</span>
+          <NavGroup items={INVESTIGATE} pathname={pathname} />
+          <span style={{ color: 'var(--border-hairline)' }}>|</span>
+          <NavGroup items={OPERATE} pathname={pathname} />
+        </div>
+        <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <button
+            onClick={cycleTheme}
+            aria-label="Toggle theme"
+            suppressHydrationWarning
+            style={{
+              padding: '6px 10px',
+              borderRadius: 6,
+              border: '1px solid var(--border-hairline)',
+              background: 'var(--bg-surface)',
+              color: 'var(--text-secondary)',
+              fontSize: 12,
+              cursor: 'pointer',
+            }}
+          >
+            {displayTheme === 'light' ? '☀' : displayTheme === 'dark' ? '☾' : '◐'} {displayTheme}
+          </button>
+          <button onClick={logout} disabled={loggingOut} style={{padding:'6px 10px',borderRadius:6,border:'1px solid var(--border-hairline)',background:'var(--bg-surface)',color:'var(--text-secondary)',cursor:'pointer'}}>{loggingOut ? '…' : 'Logout'}</button>
+          <Link
+            href="/profile"
+            style={{
+              width: 30,
+              height: 30,
+              borderRadius: 999,
+              background: 'var(--bg-surface)',
+              border: '1px solid var(--border-hairline)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'var(--text-primary)',
+              fontSize: 12,
+              fontWeight: 600,
+              textDecoration: 'none',
+            }}
+            aria-label="Profile"
+          >
+            HC
+          </Link>
+        </div>
+      </div>
+    </header>
+  )
+}

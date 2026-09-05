@@ -1,0 +1,3 @@
+import Link from 'next/link'
+import { PageHeader, Card } from '../../components/Primitives'
+export default function ForgotPasswordPage() { return <div style={{maxWidth:540,margin:'0 auto'}}><PageHeader title="Password recovery" subtitle="Password reset email delivery is not configured for this deployment."/><Card><p style={{margin:0,fontSize:13,color:'var(--text-secondary)'}}>Ask a Merchant Owner or administrator to reset the account password. S.P.A.R.K. will not pretend to send a reset link when no mail provider is configured.</p><div style={{marginTop:12,textAlign:'center',fontSize:12}}><Link href="/login">Back to sign in</Link></div></Card></div> }
